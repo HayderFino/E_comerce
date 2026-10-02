@@ -12,7 +12,14 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //
+        $products = \App\Models\Product::all();
+        return view('home', compact('products'));
+    }
+
+    public function inventory()
+    {
+        $products = \App\Models\Product::all();
+        return view('inventory.index', compact('products'));
     }
 
     /**
@@ -23,43 +30,50 @@ class ProductController extends Controller
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'image_url' => 'nullable|url'
+        ]);
+
+        $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']) . '-' . time();
+        \App\Models\Product::create($validated);
+
+        return redirect()->route('inventory.index')->with('success', 'Producto creado exitosamente.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Product $product)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Product $product)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Product $product)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'image_url' => 'nullable|url'
+        ]);
+
+        $product->update($validated);
+
+        return redirect()->route('inventory.index')->with('success', 'Producto actualizado exitosamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Product $product)
     {
-        //
+        $product->delete();
+        return redirect()->route('inventory.index')->with('success', 'Producto eliminado exitosamente.');
     }
 }

@@ -35,11 +35,33 @@
             <form action="{{ url('/login') }}" method="POST" class="space-y-6">
                 @csrf
                 
+                @if($errors->any())
+                    <div class="p-4 rounded-xl bg-red-50 border border-red-200 dark:bg-red-900/30 dark:border-red-800 animate-pulse">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <h3 class="text-sm font-bold text-red-800 dark:text-red-200">Error de autenticación</h3>
+                                <ul class="mt-1 text-sm text-red-700 dark:text-red-300 list-disc list-inside">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+                @csrf
+                
                 <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Usuario</label>
-                    <input type="text" id="username" name="username" required 
-                           class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 outline-none" 
-                           placeholder="tu_usuario">
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus
+                           class="w-full px-4 py-3 rounded-xl border @error('email') border-red-500 @else border-gray-300 dark:border-gray-700 @enderror bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 outline-none" 
+                           placeholder="tu@correo.com">
+                    @error('email')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>

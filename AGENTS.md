@@ -145,4 +145,22 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Rerun a test after each change to it.
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
+=== factus rules ===
+
+# Facturación electrónica – Factus
+
+- **Documentación oficial:** https://developers.factus.com.co/
+- **Límites de request:** https://developers.factus.com.co/limite-de-request
+
+Antes de crear o modificar cualquier código de facturación, consulta la documentación oficial de Factus. No inventes endpoints, campos ni payloads.
+
+**Límite de request (Rate Limit):**
+La API de Factus permite un máximo de 80 solicitudes por minuto por usuario. Si se supera este límite, retornará un error HTTP 429 ("Too Many Requests"). Debes implementar un manejo adecuado de rate limit (reintentos con backoff) y utilizar los encabezados `X-RateLimit-Reset` y `Retry-After` que incluye la API cuando se excede el límite.
+
+=== change management rules ===
+
+# Registro de Cambios
+
+Toda acción sobre el proyecto debe registrarse en `CHANGE_MANAGEMENT.md` usando la skill `registro-de-cambios`.
+
 </laravel-boost-guidelines>

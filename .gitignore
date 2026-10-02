@@ -28,3 +28,6 @@ Thumbs.db
 
 /database/database.sqlite
 /database/database.sqlite-journal
+AGENTS.md
+CHANGE_MANAGEMENT.md
+
