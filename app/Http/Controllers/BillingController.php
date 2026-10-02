@@ -32,9 +32,12 @@ class BillingController extends Controller
         $subtotal = collect($cart)->sum(function ($item) {
             return $item['price'] * $item['qty'];
         });
-        // Si el precio ya incluye IVA, ajustamos (o si no incluye le sumamos el 19%)
-        // Asumiendo que factus requiere 19% como en el código original:
-        $tax = $subtotal * 0.19;
+
+        $tax = collect($cart)->sum(function ($item) {
+            $rate = isset($item['taxRate']) ? $item['taxRate'] / 100 : 0.19;
+            return ($item['price'] * $item['qty']) * $rate;
+        });
+
         $totalAmount = $subtotal + $tax;
 
         // 2. Guardar venta localmente — el reference_code se genera DESPUÉS de obtener el ID real

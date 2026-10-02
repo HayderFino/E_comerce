@@ -146,6 +146,25 @@ class FactusService
     {
         $items = [];
         foreach ($sale->items as $item) {
+            $product = $item->product;
+            $taxRate = $product ? $product->tax_rate : 19.00;
+            $taxCode = $product ? $product->tax_code : '01';
+            $isExcluded = $product ? $product->is_tax_excluded : false;
+
+            $taxes = [];
+            if ($isExcluded) {
+                $taxes[] = [
+                    'code' => $taxCode,
+                    'is_excluded' => 1,
+                ];
+            } else {
+                $taxes[] = [
+                    'code' => $taxCode,
+                    'rate' => number_format($taxRate, 2, '.', ''),
+                    'is_fixed_value' => 0,
+                ];
+            }
+
             $items[] = [
                 'code_reference' => 'PROD-'.str_pad($item->product_id ?? $item->id, 4, '0', STR_PAD_LEFT),
                 'name' => $item->product_name,
@@ -154,13 +173,7 @@ class FactusService
                 'price' => $item->price,
                 'unit_measure_code' => '94', // 94 = Unidad
                 'standard_code' => '999',
-                'taxes' => [
-                    [
-                        'code' => '01', // 01 = IVA
-                        'rate' => '19.00', // 19% IVA to match the total calculated
-                        'is_fixed_value' => 0,
-                    ],
-                ],
+                'taxes' => $taxes,
             ];
         }
 
