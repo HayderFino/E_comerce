@@ -165,7 +165,7 @@ class FactusService
         }
 
         $payload = [
-            'reference_code' => $sale->reference_code,
+            'reference_code' => $sale->reference_code.'-'.now()->format('YmdHis'),
             'document' => '01', // 01 = Factura Electrónica
             'numbering_range_id' => env('FACTUS_NUMBERING_RANGE_ID', 389),
             'operation_type' => '10', // 10 = Estándar
@@ -183,7 +183,7 @@ class FactusService
                 'identification' => $sale->customer_document ?: '22222222222',
                 'legal_organization_code' => '2', // Persona natural
                 'names' => $sale->customer_name ?: 'Consumidor Final',
-                'address' => !empty($factusData['address']) ? $factusData['address'] : 'No registrada',
+                'address' => ! empty($factusData['address']) ? $factusData['address'] : 'No registrada',
                 'email' => $sale->customer_email ?: 'cliente@ejemplo.com',
                 'phone' => $factusData['phone'] ?? '0000000',
                 'municipality_code' => '68020', // Albania, Santander
