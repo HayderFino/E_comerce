@@ -74,7 +74,7 @@
                 <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     @foreach($products as $product)
                         <div class="bg-white border border-gray-200 rounded-xl shadow-sm transition flex flex-col h-full {{ $product->stock > 0 ? 'hover:shadow-md cursor-pointer' : 'opacity-60 cursor-not-allowed' }}"
-                             @click="{{ $product->stock > 0 ? 'addToCart('.$product->id.', \''.$product->name.'\', '.$product->price.', '.$product->stock.')' : '' }}">
+                             @click="{{ $product->stock > 0 ? 'addToCart('.$product->id.', \''.$product->name.'\', '.$product->price.', '.$product->stock.', '.$product->tax_rate.')' : '' }}">
                             <div class="h-32 w-full bg-indigo-50 flex flex-col items-center justify-center rounded-t-xl border-b border-gray-100 relative">
                                 @if($product->stock <= 0)
                                     <div class="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
@@ -127,7 +127,10 @@
                     <div class="flex justify-between items-start border-b border-gray-100 pb-3">
                         <div class="flex-1">
                             <h4 class="text-sm font-semibold text-gray-800" x-text="item.name"></h4>
-                            <p class="text-[10px] text-gray-400 mt-0.5" x-text="'Max: ' + item.maxStock"></p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">
+                                Max: <span x-text="item.maxStock"></span> &bull; 
+                                <span x-text="item.taxRate == 0 ? 'Excluido de IVA' : 'IVA: ' + item.taxRate + '%'"></span>
+                            </p>
                             <div class="flex items-center gap-2 mt-1">
                                 <button @click="updateQty(index, -1)" class="w-6 h-6 rounded-md bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200">-</button>
                                 <span class="text-sm font-medium w-4 text-center" x-text="item.qty"></span>
@@ -182,7 +185,7 @@
                     <span class="text-sm font-medium" x-text="'$' + formatMoney(subtotal)"></span>
                 </div>
                 <div class="flex justify-between text-gray-600 mb-3">
-                    <span class="text-sm">Impuesto (19%)</span>
+                    <span class="text-sm">Impuestos (IVA)</span>
                     <span class="text-sm font-medium" x-text="'$' + formatMoney(tax)"></span>
                 </div>
                 <div class="flex justify-between items-center mb-4 pt-2 border-t border-gray-200">
@@ -236,7 +239,7 @@
                         console.error('Error buscando cliente', e);
                     }
                 },
-                addToCart(id, name, price, maxStock) {
+                addToCart(id, name, price, maxStock, taxRate) {
                     if (maxStock <= 0) return; // Prevent out of stock clicks
                     
                     const existing = this.cart.find(i => i.id === id);
@@ -247,7 +250,8 @@
                             alert('No hay más stock disponible para este producto.');
                         }
                     } else {
-                        this.cart.push({ id, name, price: parseFloat(price), qty: 1, maxStock: parseInt(maxStock) });
+                        const tr = taxRate !== undefined && taxRate !== null ? parseFloat(taxRate) : 19;
+                        this.cart.push({ id, name, price: parseFloat(price), qty: 1, maxStock: parseInt(maxStock), taxRate: tr });
                     }
                 },
                 updateQty(index, change) {
@@ -271,7 +275,9 @@
                     return this.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
                 },
                 get tax() {
-                    return this.subtotal * 0.19; // 19% IVA default
+                    return this.cart.reduce((sum, item) => {
+                        return sum + ((item.price * item.qty) * (item.taxRate / 100));
+                    }, 0);
                 },
                 get total() {
                     return this.subtotal + this.tax;

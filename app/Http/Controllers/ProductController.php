@@ -41,9 +41,13 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image_url' => 'nullable|url',
+            'tax_code' => 'required|string|max:5',
+            'tax_rate' => 'required|numeric|min:0',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']).'-'.time();
+        $validated['is_tax_excluded'] = $request->boolean('is_tax_excluded');
+        
         Product::create($validated);
 
         return redirect()->route('inventory.index')->with('success', 'Producto creado exitosamente.');
@@ -67,8 +71,11 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image_url' => 'nullable|url',
+            'tax_code' => 'required|string|max:5',
+            'tax_rate' => 'required|numeric|min:0',
         ]);
 
+        $validated['is_tax_excluded'] = $request->boolean('is_tax_excluded');
         $product->update($validated);
 
         return redirect()->route('inventory.index')->with('success', 'Producto actualizado exitosamente.');

@@ -164,6 +164,22 @@
                                     </div>
                                 </div>
 
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">IVA (%)</label>
+                                        <select name="tax_rate" x-model="formData.tax_rate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 px-3 border">
+                                            <option value="19.00">19% (Estándar)</option>
+                                            <option value="5.00">5%</option>
+                                            <option value="0.00">0%</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center mt-6">
+                                        <input type="checkbox" name="is_tax_excluded" x-model="formData.is_tax_excluded" value="1" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                        <label class="ml-2 block text-sm text-gray-900">Excluido de IVA (ej. salud)</label>
+                                    </div>
+                                    <input type="hidden" name="tax_code" value="01">
+                                </div>
+
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">URL Imagen (Opcional)</label>
                                     <input type="url" name="image_url" x-model="formData.image_url" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 px-3 border">
@@ -197,7 +213,9 @@
                     description: '',
                     price: '',
                     stock: '',
-                    image_url: ''
+                    image_url: '',
+                    tax_rate: '19.00',
+                    is_tax_excluded: false
                 },
                 openModal(mode, product = null) {
                     this.modalMode = mode;
@@ -208,10 +226,12 @@
                             description: product.description || '',
                             price: product.price,
                             stock: product.stock,
-                            image_url: product.image_url || ''
+                            image_url: product.image_url || '',
+                            tax_rate: product.tax_rate || '19.00',
+                            is_tax_excluded: product.is_tax_excluded || false
                         };
                     } else {
-                        this.formData = { id: '', name: '', description: '', price: '', stock: '', image_url: '' };
+                        this.formData = { id: '', name: '', description: '', price: '', stock: '', image_url: '', tax_rate: '19.00', is_tax_excluded: false };
                     }
                     this.isModalOpen = true;
                 },
