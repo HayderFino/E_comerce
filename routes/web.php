@@ -1,16 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\BillingController;
-
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (Auth::check()) {
         return redirect('/home');
     }
+
     return view('login');
 })->name('login');
 
@@ -22,6 +22,7 @@ Route::post('/login', function (Request $request) {
 
     if (Auth::attempt($credentials)) {
         $request->session()->regenerate();
+
         return redirect()->intended('/home');
     }
 
@@ -34,8 +35,11 @@ Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
+
     return redirect('/');
 })->name('logout');
+
+use App\Http\Controllers\AiAssistantController;
 
 Route::middleware('auth')->group(function () {
     Route::get('/home', [ProductController::class, 'index'])->name('home');
@@ -44,4 +48,5 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/billing/create', [BillingController::class, 'create'])->name('billing.create');
     Route::post('/sales/process', [BillingController::class, 'process'])->name('sales.process');
+    Route::post('/ai/chat', [AiAssistantController::class, 'chat'])->name('ai.chat');
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -12,13 +13,15 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = \App\Models\Product::all();
+        $products = Product::all();
+
         return view('home', compact('products'));
     }
 
     public function inventory()
     {
-        $products = \App\Models\Product::all();
+        $products = Product::all();
+
         return view('inventory.index', compact('products'));
     }
 
@@ -37,11 +40,11 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image_url' => 'nullable|url'
+            'image_url' => 'nullable|url',
         ]);
 
-        $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']) . '-' . time();
-        \App\Models\Product::create($validated);
+        $validated['slug'] = Str::slug($validated['name']).'-'.time();
+        Product::create($validated);
 
         return redirect()->route('inventory.index')->with('success', 'Producto creado exitosamente.');
     }
@@ -63,7 +66,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'image_url' => 'nullable|url'
+            'image_url' => 'nullable|url',
         ]);
 
         $product->update($validated);
@@ -74,6 +77,7 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
+
         return redirect()->route('inventory.index')->with('success', 'Producto eliminado exitosamente.');
     }
 }

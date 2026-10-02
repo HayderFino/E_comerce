@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'factus' => [
+        'base_url' => env('FACTUS_BASE_URL', 'https://api-sandbox.factus.com.co'),
+        'email' => env('FACTUS_EMAIL'),
+        'password' => env('FACTUS_PASSWORD'),
+        'client_id' => env('FACTUS_CLIENT_ID'),
+        'client_secret' => env('FACTUS_CLIENT_SECRET'),
+    ],
+
 ];

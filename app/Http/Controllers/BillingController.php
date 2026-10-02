@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Services\FactusService;
 use Illuminate\Http\Request;
 
 class BillingController extends Controller
@@ -19,101 +22,124 @@ class BillingController extends Controller
             'factus_data' => 'required|array',
         ]);
 
-        // 2. Autenticarse con Factus (Con reintentos para Rate Limit 429)
-        $authResponse = \Illuminate\Support\Facades\Http::retry(3, 1000, function ($exception, $request) {
-            return $exception instanceof \Illuminate\Http\Client\RequestException && $exception->response->status() === 429;
-        })->asForm()->post('https://api-sandbox.factus.com.co/oauth/token', [
-            'grant_type' => 'password',
-            'client_id' => env('FACTUS_CLIENT_ID'),
-            'client_secret' => env('FACTUS_CLIENT_SECRET'),
-            'username' => env('FACTUS_USERNAME'),
-            'password' => env('FACTUS_PASSWORD'),
-        ]);
-
-        if (!$authResponse->successful()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error autenticando con Factus.',
-                'error' => $authResponse->json()
-            ], 500);
-        }
-
-        $token = $authResponse->json('access_token');
-
-        // 3. Preparar el Payload para Factus
         $factusData = $request->factus_data;
         $cart = $request->cart;
 
-        $items = collect($cart)->map(function ($item, $index) {
-            return [
-                "code_reference" => "PROD-" . $item['id'],
-                "name" => $item['name'],
-                "quantity" => number_format($item['qty'], 2, '.', ''),
-                "discount_rate" => "0.00",
-                "price" => number_format($item['price'], 2, '.', ''),
-                "unit_measure_code" => "94", // unidad
-                "standard_code" => "999", // adopción del contribuyente
-                "taxes" => [
-                    [
-                        "code" => "01", // IVA
-                        "rate" => "19.00"
-                    ]
-                ]
-            ];
-        })->toArray();
-
-        // Calculamos totales desde los items
-        $totalAmount = collect($cart)->sum(function ($item) {
-            return ($item['price'] * $item['qty']) * 1.19; // precio + 19% iva
+        // Calculamos totales
+        $subtotal = collect($cart)->sum(function ($item) {
+            return $item['price'] * $item['qty'];
         });
+        // Si el precio ya incluye IVA, ajustamos (o si no incluye le sumamos el 19%)
+        // Asumiendo que factus requiere 19% como en el código original:
+        $tax = $subtotal * 0.19;
+        $totalAmount = $subtotal + $tax;
 
-        // 4. Construir Body
-        $payload = [
-            "reference_code" => "POS-" . time() . rand(1000, 9999),
-            "document" => "01", // factura de venta
-            "operation_type" => "10", // estándar
-            "send_email" => true,
-            "cash_rounding_amount" => "0.00",
-            "payment_details" => [
-                [
-                    "payment_form" => $factusData['paymentForm'],
-                    "payment_method_code" => $factusData['paymentMethod'],
-                    "amount" => number_format($totalAmount, 2, '.', '')
-                ]
-            ],
-            "customer" => [
-                "identification_document_code" => $factusData['docType'],
-                "identification" => $factusData['docNum'],
-                "legal_organization_code" => "2", // Asumimos persona natural por simplicidad
-                "names" => $factusData['name'],
-                "address" => "No registrada", // Requerido por la DIAN en algunos casos
-                "email" => $factusData['email'],
-                "tribute_code" => "ZZ",
-                "responsibilities" => ["R-99-PN"],
-            ],
-            "items" => $items
-        ];
+        // 2. Generar Consecutivo Ordenado y Guardar venta localmente
+        $lastSale = Sale::latest('id')->first();
+        $nextId = $lastSale ? $lastSale->id + 1 : 1;
+        $referenceCode = 'POS-'.str_pad($nextId, 5, '0', STR_PAD_LEFT);
 
-        // 5. Enviar Factura a Factus (Con reintentos para Rate Limit 429)
-        $billResponse = \Illuminate\Support\Facades\Http::withToken($token)
-            ->retry(3, 1000, function ($exception, $request) {
-                return $exception instanceof \Illuminate\Http\Client\RequestException && $exception->response->status() === 429;
-            })
-            ->post('https://api-sandbox.factus.com.co/v1/bills/validate', $payload);
+        $sale = Sale::create([
+            'user_id' => auth()->id(),
+            'customer_document' => $factusData['docNum'],
+            'customer_name' => $factusData['name'],
+            'customer_email' => $factusData['email'],
+            'subtotal' => $subtotal,
+            'tax' => $tax,
+            'total' => $totalAmount,
+            'reference_code' => $referenceCode,
+            'factus_status' => 'pending',
+        ]);
 
-        if (!$billResponse->successful()) {
+        foreach ($cart as $item) {
+            SaleItem::create([
+                'sale_id' => $sale->id,
+                'product_id' => $item['id'],
+                'product_name' => $item['name'],
+                'quantity' => $item['qty'],
+                'price' => $item['price'],
+                'subtotal' => $item['price'] * $item['qty'],
+            ]);
+        }
+
+        // 3. Procesar Factura Electrónica
+        try {
+            $factusService = app(FactusService::class);
+
+            // Reconstruimos el array original de la API de Factus
+            $items = collect($cart)->map(function ($item) {
+                return [
+                    'code_reference' => 'PROD-'.$item['id'],
+                    'name' => $item['name'],
+                    'quantity' => number_format($item['qty'], 2, '.', ''),
+                    'discount_rate' => '0.00',
+                    'price' => number_format($item['price'], 2, '.', ''),
+                    'unit_measure_code' => '94', // unidad
+                    'standard_code' => '999',
+                    'taxes' => [
+                        [
+                            'code' => '01', // IVA
+                            'rate' => '19.00',
+                        ],
+                    ],
+                ];
+            })->toArray();
+
+            $payload = [
+                'reference_code' => $referenceCode,
+                'document' => '01', // factura de venta
+                'numbering_range_id' => env('FACTUS_NUMBERING_RANGE_ID', 389), // Obtenido del endpoint V2
+                'operation_type' => '10', // estándar
+                'send_email' => true,
+                'payment_details' => [
+                    [
+                        'payment_form' => $factusData['paymentForm'],
+                        'payment_method_code' => $factusData['paymentMethod'],
+                        'amount' => number_format($totalAmount, 2, '.', ''),
+                    ],
+                ],
+                'customer' => [
+                    'identification_document_code' => $factusData['docType'],
+                    'identification' => $factusData['docNum'],
+                    'legal_organization_code' => '2', // Asumimos persona natural por simplicidad
+                    'names' => $factusData['name'],
+                    'address' => 'No registrada',
+                    'email' => $factusData['email'],
+                    'tribute_code' => 'ZZ',
+                    'responsibilities' => ['R-99-PN'],
+                ],
+                'items' => $items,
+            ];
+
+            // 4. Enviar Factura a Factus usando el Servicio
+            $response = $factusService->createInvoiceFromSale($sale, $factusData);
+
+            $sale->update([
+                'factus_status' => 'success',
+                'factus_response' => json_encode($response),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Venta registrada y factura electrónica enviada correctamente.',
+                'factus' => $response,
+            ]);
+
+        } catch (\Exception $e) {
+            $responseBody = $e instanceof \Illuminate\Http\Client\RequestException 
+                ? $e->response->body() 
+                : $e->getMessage();
+
+            $sale->update([
+                'factus_status' => 'failed',
+                'factus_response' => $responseBody,
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error validando la factura en Factus.',
-                'error' => $billResponse->json(),
-                'payload_enviado' => $payload
+                'error' => json_decode($responseBody, true) ?? $responseBody,
             ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Venta registrada y factura electrónica enviada correctamente.',
-            'factus' => $billResponse->json()
-        ]);
     }
 }

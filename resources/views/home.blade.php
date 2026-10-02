@@ -148,9 +148,9 @@
                 
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <select x-model="factus.docType" class="text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
-                        <option value="3">CC</option>
-                        <option value="6">NIT</option>
-                        <option value="4">CE</option>
+                        <option value="13">CC</option>
+                        <option value="31">NIT</option>
+                        <option value="22">CE</option>
                     </select>
                     <input type="text" x-model="factus.docNum" placeholder="Número Doc." class="text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
                 </div>
@@ -206,7 +206,7 @@
                 cart: [],
                 isProcessing: false,
                 factus: {
-                    docType: '3',
+                    docType: '13',
                     docNum: '',
                     name: '',
                     email: '',
@@ -308,6 +308,90 @@
                     } finally {
                         this.isProcessing = false; // Desbloquea el botón siempre, incluso si falla
                     }
+                }
+            }
+        }
+    </script>
+    <!-- AI Assistant Widget (OCULTO POR AHORA PARA IMPLEMENTAR MÁS ADELANTE) -->
+    <div x-data="aiAssistant()" class="fixed bottom-6 right-6 z-50 hidden">
+        <!-- Chat Button -->
+        <button @click="open = !open" class="bg-indigo-600 text-white p-4 rounded-full shadow-lg hover:bg-indigo-700 transition flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+        </button>
+
+        <!-- Chat Window -->
+        <div x-show="open" x-transition class="absolute bottom-16 right-0 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col" style="height: 400px; display: none;">
+            <div class="bg-indigo-600 text-white p-3 font-bold flex justify-between items-center">
+                <span>🤖 Asistente IA</span>
+                <button @click="open = false" class="text-white hover:text-gray-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="flex-1 p-3 overflow-y-auto bg-gray-50 flex flex-col gap-2" id="chat-messages">
+                <template x-for="msg in messages">
+                    <div :class="msg.role === 'user' ? 'text-right' : 'text-left'">
+                        <span :class="msg.role === 'user' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-800'" class="inline-block p-2 rounded-lg text-sm max-w-[80%]" x-text="msg.text"></span>
+                    </div>
+                </template>
+                <div x-show="loading" class="text-left">
+                    <span class="bg-gray-200 text-gray-800 inline-block p-2 rounded-lg text-sm shadow-sm font-medium animate-pulse">Pensando...</span>
+                </div>
+            </div>
+
+            <div class="p-3 border-t bg-white flex gap-2">
+                <input type="text" x-model="input" @keydown.enter="sendMessage" placeholder="Pregunta algo..." class="flex-1 text-sm rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500">
+                <button @click="sendMessage" :disabled="loading" class="bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function aiAssistant() {
+            return {
+                open: false,
+                input: '',
+                loading: false,
+                messages: [
+                    { role: 'ai', text: '¡Hola! Soy Gemini. Conozco el inventario actual y tus ventas de hoy. ¿En qué te ayudo?' }
+                ],
+                sendMessage() {
+                    if (this.input.trim() === '') return;
+                    
+                    const userMsg = this.input;
+                    this.messages.push({ role: 'user', text: userMsg });
+                    this.input = '';
+                    this.loading = true;
+
+                    this.$nextTick(() => {
+                        const box = document.getElementById('chat-messages');
+                        box.scrollTop = box.scrollHeight;
+                    });
+
+                    fetch('/ai/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ message: userMsg })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.messages.push({ role: 'ai', text: data.reply });
+                    })
+                    .catch(() => {
+                        this.messages.push({ role: 'ai', text: 'Error de conexión con Gemini.' });
+                    })
+                    .finally(() => {
+                        this.loading = false;
+                        this.$nextTick(() => {
+                            const box = document.getElementById('chat-messages');
+                            box.scrollTop = box.scrollHeight;
+                        });
+                    });
                 }
             }
         }
