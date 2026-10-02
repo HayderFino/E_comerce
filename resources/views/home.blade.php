@@ -148,9 +148,9 @@
                 
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <select x-model="factus.docType" class="text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
-                        <option value="3">CC</option>
-                        <option value="6">NIT</option>
-                        <option value="4">CE</option>
+                        <option value="13">CC</option>
+                        <option value="31">NIT</option>
+                        <option value="22">CE</option>
                     </select>
                     <input type="text" x-model="factus.docNum" @input.debounce.500ms="searchCustomer" placeholder="Número Doc." class="text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
                 </div>
@@ -211,7 +211,7 @@
                 cart: [],
                 isProcessing: false,
                 factus: {
-                    docType: '3',
+                    docType: '13',
                     docNum: '',
                     name: '',
                     email: '',
