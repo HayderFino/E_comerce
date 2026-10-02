@@ -179,16 +179,15 @@ class FactusService
                 ],
             ],
             'customer' => [
-                'identification_document_code' => $factusData['docType'] ?? '13', // 13 = CC
+                'identification_document_id' => $factusData['docType'] ?? '3', // 3 = CC
                 'identification' => $sale->customer_document ?: '22222222222',
-                'legal_organization_code' => '2', // Persona natural
+                'legal_organization_id' => '2', // 2 = Persona natural
                 'names' => $sale->customer_name ?: 'Consumidor Final',
                 'address' => !empty($factusData['address']) ? $factusData['address'] : 'No registrada',
                 'email' => $sale->customer_email ?: 'cliente@ejemplo.com',
-                'phone' => $factusData['phone'] ?? '',
-                'municipality_code' => '68020', // Albania, Santander
-                'tribute_code' => 'ZZ',
-                'responsibilities' => ['R-99-PN'],
+                'phone' => $factusData['phone'] ?? '0000000',
+                'municipality_id' => '980', // 980 = San Gil, Santander
+                'tribute_id' => '21', // 21 = No responsable de IVA
             ],
             'items' => $items,
         ];
