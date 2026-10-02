@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Services\FactusService;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 
 class BillingController extends Controller
@@ -34,11 +37,7 @@ class BillingController extends Controller
         $tax = $subtotal * 0.19;
         $totalAmount = $subtotal + $tax;
 
-        // 2. Generar Consecutivo Ordenado y Guardar venta localmente
-        $lastSale = Sale::latest('id')->first();
-        $nextId = $lastSale ? $lastSale->id + 1 : 1;
-        $referenceCode = 'POS-'.str_pad($nextId, 5, '0', STR_PAD_LEFT);
-
+        // 2. Guardar venta localmente — el reference_code se genera DESPUÉS de obtener el ID real
         $sale = Sale::create([
             'user_id' => auth()->id(),
             'customer_document' => $factusData['docNum'],
@@ -47,9 +46,13 @@ class BillingController extends Controller
             'subtotal' => $subtotal,
             'tax' => $tax,
             'total' => $totalAmount,
-            'reference_code' => $referenceCode,
+            'reference_code' => 'POS-TEMP', // temporal, se actualiza en la siguiente línea
             'factus_status' => 'pending',
         ]);
+
+        // Usar el ID real para evitar duplicados en Factus
+        $referenceCode = 'POS-'.str_pad($sale->id, 5, '0', STR_PAD_LEFT);
+        $sale->update(['reference_code' => $referenceCode]);
 
         foreach ($cart as $item) {
             SaleItem::create([
@@ -62,8 +65,8 @@ class BillingController extends Controller
             ]);
 
             // Descontar el stock
-            if (!empty($item['id'])) {
-                $product = \App\Models\Product::find($item['id']);
+            if (! empty($item['id'])) {
+                $product = Product::find($item['id']);
                 if ($product && $product->stock >= $item['qty']) {
                     $product->decrement('stock', $item['qty']);
                 }
@@ -71,8 +74,8 @@ class BillingController extends Controller
         }
 
         // Guardar el cliente en el directorio si no existe
-        if (!empty($factusData['docNum']) && !empty($factusData['name'])) {
-            \App\Models\Customer::firstOrCreate(
+        if (! empty($factusData['docNum']) && ! empty($factusData['name'])) {
+            Customer::firstOrCreate(
                 ['document_number' => $factusData['docNum']],
                 [
                     'name' => $factusData['name'],
@@ -103,8 +106,8 @@ class BillingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            $responseBody = $e instanceof \Illuminate\Http\Client\RequestException 
-                ? $e->response->body() 
+            $responseBody = $e instanceof RequestException
+                ? $e->response->body()
                 : $e->getMessage();
 
             $sale->update([

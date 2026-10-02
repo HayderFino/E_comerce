@@ -5,6 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SaleResource\Pages;
 use App\Models\Sale;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,25 +24,25 @@ class SaleResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    public static function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
+    public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
-                \Filament\Infolists\Components\Section::make('Información del Cliente')
+                Section::make('Información del Cliente')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('customer_name')->label('Nombre'),
-                        \Filament\Infolists\Components\TextEntry::make('customer_document')->label('Documento'),
-                        \Filament\Infolists\Components\TextEntry::make('customer_email')->label('Email'),
+                        TextEntry::make('customer_name')->label('Nombre'),
+                        TextEntry::make('customer_document')->label('Documento'),
+                        TextEntry::make('customer_email')->label('Email'),
                     ])->columns(3),
 
-                \Filament\Infolists\Components\Section::make('Detalles de la Venta')
+                Section::make('Detalles de la Venta')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('reference_code')->label('Referencia'),
-                        \Filament\Infolists\Components\TextEntry::make('created_at')->label('Fecha')->dateTime(),
-                        \Filament\Infolists\Components\TextEntry::make('subtotal')->label('Subtotal')->money('COP'),
-                        \Filament\Infolists\Components\TextEntry::make('tax')->label('Impuestos')->money('COP'),
-                        \Filament\Infolists\Components\TextEntry::make('total')->label('Total')->money('COP')->weight('bold'),
-                        \Filament\Infolists\Components\TextEntry::make('factus_status')->label('Estado Factus')
+                        TextEntry::make('reference_code')->label('Referencia'),
+                        TextEntry::make('created_at')->label('Fecha')->dateTime(),
+                        TextEntry::make('subtotal')->label('Subtotal')->money('COP'),
+                        TextEntry::make('tax')->label('Impuestos')->money('COP'),
+                        TextEntry::make('total')->label('Total')->money('COP')->weight('bold'),
+                        TextEntry::make('factus_status')->label('Estado Factus')
                             ->badge()
                             ->color(fn (string $state): string => match ($state) {
                                 'success' => 'success',
@@ -48,9 +51,9 @@ class SaleResource extends Resource
                             }),
                     ])->columns(3),
 
-                \Filament\Infolists\Components\Section::make('Respuesta de Factus (API)')
+                Section::make('Respuesta de Factus (API)')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('factus_response')
+                        TextEntry::make('factus_response')
                             ->label('')
                             ->formatStateUsing(fn ($state) => '<pre style="max-height: 250px; overflow-y: auto;" class="text-xs">'.e(json_encode(json_decode($state), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) ?: $state).'</pre>')
                             ->html()
@@ -98,6 +101,7 @@ class SaleResource extends Resource
                         default => 'warning',
                     }),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
