@@ -60,6 +60,14 @@ class BillingController extends Controller
                 'price' => $item['price'],
                 'subtotal' => $item['price'] * $item['qty'],
             ]);
+
+            // Descontar el stock
+            if (!empty($item['id'])) {
+                $product = \App\Models\Product::find($item['id']);
+                if ($product && $product->stock >= $item['qty']) {
+                    $product->decrement('stock', $item['qty']);
+                }
+            }
         }
 
         // Guardar el cliente en el directorio si no existe
