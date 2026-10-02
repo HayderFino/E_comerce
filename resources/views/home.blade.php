@@ -152,10 +152,15 @@
                         <option value="31">NIT</option>
                         <option value="22">CE</option>
                     </select>
-                    <input type="text" x-model="factus.docNum" placeholder="Número Doc." class="text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
+                    <input type="text" x-model="factus.docNum" @input.debounce.500ms="searchCustomer" placeholder="Número Doc." class="text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
                 </div>
                 <input type="text" x-model="factus.name" placeholder="Nombre / Razón Social" class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2 mb-2">
-                <input type="email" x-model="factus.email" placeholder="Correo electrónico" class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2 mb-3">
+                
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="email" x-model="factus.email" placeholder="Correo electrónico" class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
+                    <input type="tel" x-model="factus.phone" placeholder="Teléfono" class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
+                </div>
+                <input type="text" x-model="factus.address" placeholder="Dirección" class="w-full text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2 mb-3">
                 
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <select x-model="factus.paymentMethod" class="text-sm border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-1.5 px-2">
@@ -210,8 +215,26 @@
                     docNum: '',
                     name: '',
                     email: '',
+                    phone: '',
+                    address: '',
                     paymentMethod: '10',
                     paymentForm: '1'
+                },
+                async searchCustomer() {
+                    if (this.factus.docNum.length < 4) return;
+                    try {
+                        const res = await fetch(`/api/customers/${this.factus.docNum}`);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.factus.docType = data.customer.document_type;
+                            this.factus.name = data.customer.name;
+                            this.factus.email = data.customer.email || '';
+                            this.factus.phone = data.customer.phone || '';
+                            this.factus.address = data.customer.address || '';
+                        }
+                    } catch (e) {
+                        console.error('Error buscando cliente', e);
+                    }
                 },
                 addToCart(id, name, price, maxStock) {
                     if (maxStock <= 0) return; // Prevent out of stock clicks
@@ -298,6 +321,8 @@
                             this.factus.docNum = '';
                             this.factus.name = '';
                             this.factus.email = '';
+                            this.factus.phone = '';
+                            this.factus.address = '';
                         } else {
                             alert('Hubo un error al procesar la factura.\nRevisa la consola para más detalles.');
                             console.error('Error desde el servidor:', data);

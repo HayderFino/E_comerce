@@ -62,6 +62,20 @@ class BillingController extends Controller
             ]);
         }
 
+        // Guardar el cliente en el directorio si no existe
+        if (!empty($factusData['docNum']) && !empty($factusData['name'])) {
+            \App\Models\Customer::firstOrCreate(
+                ['document_number' => $factusData['docNum']],
+                [
+                    'name' => $factusData['name'],
+                    'document_type' => $factusData['docType'] ?? '13',
+                    'email' => $factusData['email'] ?? null,
+                    'phone' => $factusData['phone'] ?? null,
+                    'address' => $factusData['address'] ?? null,
+                ]
+            );
+        }
+
         // 3. Procesar Factura Electrónica
         try {
             $factusService = app(FactusService::class);
@@ -103,8 +117,10 @@ class BillingController extends Controller
                     'identification' => $factusData['docNum'],
                     'legal_organization_code' => '2', // Asumimos persona natural por simplicidad
                     'names' => $factusData['name'],
-                    'address' => 'No registrada',
+                    'address' => !empty($factusData['address']) ? $factusData['address'] : 'No registrada',
                     'email' => $factusData['email'],
+                    'phone' => $factusData['phone'] ?? '',
+                    'municipality_code' => '68020', // Código DIVIPOLA de Albania, Santander
                     'tribute_code' => 'ZZ',
                     'responsibilities' => ['R-99-PN'],
                 ],

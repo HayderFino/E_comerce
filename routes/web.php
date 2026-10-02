@@ -49,4 +49,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/billing/create', [BillingController::class, 'create'])->name('billing.create');
     Route::post('/sales/process', [BillingController::class, 'process'])->name('sales.process');
     Route::post('/ai/chat', [AiAssistantController::class, 'chat'])->name('ai.chat');
+    Route::get('/api/customers/{document}', function ($document) {
+        $customer = \App\Models\Customer::where('document_number', $document)->first();
+        if ($customer) {
+            return response()->json(['success' => true, 'customer' => $customer]);
+        }
+        return response()->json(['success' => false]);
+    });
 });
