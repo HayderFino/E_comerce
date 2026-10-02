@@ -186,7 +186,7 @@ class FactusService
                 'address' => !empty($factusData['address']) ? $factusData['address'] : 'No registrada',
                 'email' => $sale->customer_email ?: 'cliente@ejemplo.com',
                 'phone' => $factusData['phone'] ?? '0000000',
-                'municipality_code' => '68679', // San Gil, Santander
+                'municipality_code' => '68020', // Albania, Santander
                 'tribute_code' => 'ZZ',
             ],
             'items' => $items,
