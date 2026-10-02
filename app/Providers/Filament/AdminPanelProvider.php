@@ -32,6 +32,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('Volver al POS')
+                    ->url('/home')
+                    ->icon('heroicon-o-computer-desktop')
+                    ->sort(-1),
+            ])
             ->pages([
                 Pages\Dashboard::class,
             ])

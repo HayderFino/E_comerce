@@ -80,53 +80,6 @@ class BillingController extends Controller
         try {
             $factusService = app(FactusService::class);
 
-            // Reconstruimos el array original de la API de Factus
-            $items = collect($cart)->map(function ($item) {
-                return [
-                    'code_reference' => 'PROD-'.$item['id'],
-                    'name' => $item['name'],
-                    'quantity' => number_format($item['qty'], 2, '.', ''),
-                    'discount_rate' => '0.00',
-                    'price' => number_format($item['price'], 2, '.', ''),
-                    'unit_measure_code' => '94', // unidad
-                    'standard_code' => '999',
-                    'taxes' => [
-                        [
-                            'code' => '01', // IVA
-                            'rate' => '19.00',
-                        ],
-                    ],
-                ];
-            })->toArray();
-
-            $payload = [
-                'reference_code' => $referenceCode,
-                'document' => '01', // factura de venta
-                'numbering_range_id' => env('FACTUS_NUMBERING_RANGE_ID', 389), // Obtenido del endpoint V2
-                'operation_type' => '10', // estándar
-                'send_email' => true,
-                'payment_details' => [
-                    [
-                        'payment_form' => $factusData['paymentForm'],
-                        'payment_method_code' => $factusData['paymentMethod'],
-                        'amount' => number_format($totalAmount, 2, '.', ''),
-                    ],
-                ],
-                'customer' => [
-                    'identification_document_code' => $factusData['docType'],
-                    'identification' => $factusData['docNum'],
-                    'legal_organization_code' => '2', // Asumimos persona natural por simplicidad
-                    'names' => $factusData['name'],
-                    'address' => !empty($factusData['address']) ? $factusData['address'] : 'No registrada',
-                    'email' => $factusData['email'],
-                    'phone' => $factusData['phone'] ?? '',
-                    'municipality_code' => '68020', // Código DIVIPOLA de Albania, Santander
-                    'tribute_code' => 'ZZ',
-                    'responsibilities' => ['R-99-PN'],
-                ],
-                'items' => $items,
-            ];
-
             // 4. Enviar Factura a Factus usando el Servicio
             $response = $factusService->createInvoiceFromSale($sale, $factusData);
 

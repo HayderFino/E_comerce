@@ -181,14 +181,17 @@ class FactusService
             'customer' => [
                 'identification_document_code' => $factusData['docType'] ?? '13', // 13 = CC
                 'identification' => $sale->customer_document ?: '22222222222',
+                'legal_organization_code' => '2', // Persona natural
                 'names' => $sale->customer_name ?: 'Consumidor Final',
+                'address' => !empty($factusData['address']) ? $factusData['address'] : 'No registrada',
+                'email' => $sale->customer_email ?: 'cliente@ejemplo.com',
+                'phone' => $factusData['phone'] ?? '',
+                'municipality_code' => '68020', // Albania, Santander
+                'tribute_code' => 'ZZ',
+                'responsibilities' => ['R-99-PN'],
             ],
             'items' => $items,
         ];
-
-        if ($sale->customer_email) {
-            $payload['customer']['email'] = $sale->customer_email;
-        }
 
         return $this->validateInvoice($payload);
     }
