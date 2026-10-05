@@ -1,0 +1,2 @@
+- Implementar y habilitar pagos con Tarjeta de Crédito y modalidad de pago a Crédito en la facturación y en el POS.
+- Implementar y habilitar pagos con Tarjeta de Débito / Transferencia débito bancario en la facturación y en el POS.
