@@ -44,3 +44,4 @@ Fecha y Hora,Tipo de Cambio,Elemento Modificado,Archivos Afectados,Descripción 
 2026-10-04 21:07,Feature/Tweak,Vistas,"resources/views/home.blade.php, resources/views/billing/create.blade.php",Ocultar opciones de débito,Solicitado por el usuario para ser implementado más adelante
 2026-10-05 10:25,Feature,Vistas,"resources/views/home.blade.php, resources/views/inventory/index.blade.php, resources/views/billing/create.blade.php",Agregado footer con links a GitHub y LinkedIn del autor,Solicitado por el usuario
 2026-10-05 10:36,Feature,Seeder,"database/seeders/DatabaseSeeder.php",Agregado de 10 productos base y creación de usuario administrador para evaluadores de Factus,Solicitado por el usuario para pruebas y revisión
+2026-10-05 11:58,Feature,Seeder,"database/seeders/DatabaseSeeder.php",Agregado de imágenes a los 10 productos base del seeder y despliegue a la nube,Solicitado por el usuario para mejorar el catálogo en la vista

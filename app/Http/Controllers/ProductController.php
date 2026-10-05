@@ -25,6 +25,12 @@ class ProductController extends Controller
         return view('inventory.index', compact('products'));
     }
 
+    public function productsGrid()
+    {
+        $products = Product::where('is_active', true)->get();
+        return view('partials.products-grid', compact('products'));
+    }
+
     /**
      * Show the form for creating a new resource.
      */
